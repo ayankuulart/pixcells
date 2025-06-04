@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Pixcells</title>
+  </head>
+  <body>
+    <!-- <canvas id="canvas" width="500" height="500"></canvas> -->
+    <!-- <div class="controls"> -->
+      <!-- <input id="input-color" type="color" /> -->
+    <!-- </div> -->
+    <!-- <div class="layers"> -->
+      <!-- <button id="add-layer-button">+</button> -->
+      <!-- <button id="remove-layer-button">-</button> -->
+    <!-- </div> -->
+    <input id="color-input" type="color" />
+  </body>
+ <script>
+   var colorInput = document.getElementById("color-input");
+   colorInput.addEventListener("change", event => {
+     console.log(event.target.value);
+     document.body.style.backgroundColor = event.target.value;}
+
+     );
+ </script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+    }
+    html,
+    body {
+      height: 100%;
+    }
+    body {
+      display: flex;
+    }
+    #canvas {
+      display: block;
+      image-rendering: pixelated;
+      width: auto;
+      height: 70%;
+      cursor: crosshair;
+      margin: auto;
+    }
+    input[type="color"] {
+      border: none;
+      outline: none;
+    }
+    .layers {
+      display: flex;
+      gap: 8px;
+      position: fixed;
+      cursor: pointer;
+      bottom: 64px;
+      transform: translateX(-50%);
+      left: 50%;
+      max-width: 600px;
+      flex-wrap: wrap;
+    }
+    .layers canvas {
+      background: #fff;
+      width: 64px;
+      height: 64px;
+      image-rendering: pixelated;
+    }
+    .layers canvas.selected {
+      outline: 3px solid rgba(220, 157, 157, 1);
+    }
+    .layers button {
+      width: 64px;
+      height: 64px;
+      background: black;
+      color: white;
+      border: none;
+      outline: none;
+      order: 1;
+      cursor: pointer;
+    }
+    .controls {
+      position: fixed;
+      left: 16px;
+      top: 16px;
+    }
+  </style>
+  <script src="/tools/pencilTool.js"></script>
+  <script src="/tools/eraserTool.js"></script>
+  <script src="/utils/hexToRGBA.js"></script>
+  <script src="/utils/createTempCanvasWithImageData.js"></script>
+  <script src="/pixcells-core.js"></script>
+  <script>
+    const inputColor = document.getElementById("input-color");
+    const addLayerButton = document.getElementById("add-layer-button");
+    const removeLayerButton = document.getElementById("remove-layer-button");
+    const layersWrapper = document.querySelector(".layers");
+    const core = new PixcellsCore(document.getElementById("canvas"));
+
+    inputColor.addEventListener("change", (event) => {
+      core.activeColor = hexToRGBA(event.target.value);
+    });
+
+    window.pixcells = core;
+
+    const updateLayers = () => {
+      core.layers.map((layer, index) => {
+        if (index === 0) return;
+
+        const canvas = document.createElement("canvas");
+        canvas.className = "layer";
+        canvas.width = core.width;
+        canvas.height = core.height;
+
+        canvas.addEventListener("click", (event) => {
+          const layers = document.querySelectorAll(".layer");
+
+          layers.forEach((layer) => {
+            layer.parentNode.removeChild(layer);
+          });
+
+          console.log(event);
+          core.changeLayer(index);
+          updateLayers();
+          updateSelectedLayer();
+        });
+
+        const context = canvas.getContext("2d");
+        context.putImageData(layer, 0, 0);
+
+        layersWrapper.appendChild(canvas);
+
+        return canvas;
+      });
+    };
+    updateLayers();
+
+    const updateSelectedLayer = () => {
+      const layers = document.querySelectorAll(".layer");
+
+      layers.forEach((canvas, index) => {
+        if (!canvas) return;
+
+        if (index === core.activeLayerIndex - 1) {
+          canvas.className = "layer selected";
+        } else {
+          canvas.className = "layer";
+        }
+      });
+    };
+    updateSelectedLayer();
+
+    addLayerButton.addEventListener("click", () => {
+      const layers = document.querySelectorAll(".layer");
+
+      layers.forEach((layer) => {
+        layer.parentNode.removeChild(layer);
+      });
+
+      core.addLayer();
+      updateLayers();
+      updateSelectedLayer();
+    });
+
+    removeLayerButton.addEventListener("click", () => {
+      const layers = document.querySelectorAll(".layer");
+
+      layers.forEach((layer, index) => {
+        if (index === core.activeLayerIndex - 1) {
+          core.removeLayer(core.activeLayerIndex);
+        }
+      });
+
+      layers.forEach((layer) => {
+        layer.parentNode.removeChild(layer);
+      });
+
+      updateLayers();
+      updateSelectedLayer();
+    });
+
+    core.onFinishedLayerDraw = () => {
+      const layers = document.querySelectorAll(".layer");
+
+      layers.forEach((layer) => {
+        layer.parentNode.removeChild(layer);
+      });
+
+      updateLayers();
+      updateSelectedLayer();
+    };
+  </script>
+</html>

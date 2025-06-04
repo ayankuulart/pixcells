@@ -1,0 +1,11 @@
+{
+  "name": "pixcells",
+  "version": "0.0.1",
+  "scripts": {
+    "start": "node ./src/pixcells-dev-server/index.js"
+  },
+  "author": "aian",
+  "license": "ISC",
+  "description": "Simple pixel art drawing app",
+  "dependencies": {}
+}
